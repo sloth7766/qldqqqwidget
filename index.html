@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QLD 매매전략</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QLD 전략">
+<meta name="theme-color" content="#07090D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EDF2; --card:#FFFFFF; --card2:#F3F5F8; --ink:#0F141B; --muted:#646D7A; --faint:#98A0AC; --line:#DCE1E7;
+  --green:#14964A; --blue:#2B78DA; --red:#DD3F45; --yellow:#D9A514; --orange:#E57E1F; --grey:#CDD2D9; --lb:#7DB2F0;
+  --focus:#2B78DA; --purple:#7C4DDB; --green2:#0E7A3C;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#07090D; --card:#12161D; --card2:#1A1F28; --ink:#F1F3F6; --muted:#9099A6; --faint:#5F6874; --line:#252B35;
+    --green:#3DD68C; --blue:#5AA2FF; --red:#F0565C; --yellow:#F2C94C; --orange:#F59A3C; --grey:#3A414C; --lb:#3F78C4;
+    --focus:#5AA2FF; --purple:#B18CFF; --green2:#23A86A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#07090D; --card:#12161D; --card2:#1A1F28; --ink:#F1F3F6; --muted:#9099A6; --faint:#5F6874; --line:#252B35;
+  --green:#3DD68C; --blue:#5AA2FF; --red:#F0565C; --yellow:#F2C94C; --orange:#F59A3C; --grey:#3A414C; --lb:#3F78C4;
+  --focus:#5AA2FF; --purple:#B18CFF; --green2:#23A86A; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px;display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* widget */
+.widget{background:var(--card);border-radius:28px;padding:22px 22px 18px;border:1px solid var(--line);position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+@media (max-width:860px){.widget{position:static}}
+.w-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.w-title{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.w-live{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--green);flex:none}
+.w-live b{font-weight:600;color:var(--green)}
+.headline{font-size:31px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin:14px 0 4px;color:var(--green)}
+.headline.warn{color:var(--orange)} .headline.bad{color:var(--red)} .headline.cash{color:var(--blue)} .headline.idle{color:var(--ink)}
+.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:16px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
+.stat:nth-child(3),.stat:nth-child(4){text-align:right}
+.stat:nth-child(3) .v,.stat:nth-child(4) .v{font-size:21px}
+.c-green{color:var(--green)} .c-blue{color:var(--blue)} .c-red{color:var(--red)} .c-orange{color:var(--orange)} .c-muted{color:var(--muted)}
+.gauge{margin-bottom:14px}
+.g-head{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:6px}
+.g-head .lab{font-weight:600}
+.g-head .val{color:var(--muted)}
+.bar{position:relative;height:10px;display:flex;gap:3px}
+.bar span{height:100%;border-radius:2px}
+.bar .knob{position:absolute;top:50%;width:12px;height:18px;border-radius:7px;background:#fff;box-shadow:0 0 0 2px var(--card),0 1px 4px rgba(0,0,0,.35);transform:translate(-50%,-50%);transition:left .5s ease}
+.g-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:5px}
+.pips{display:flex;gap:4px;align-items:center}
+.pip{width:16px;height:6px;border-radius:3px;background:var(--grey)}
+.pip.on{background:var(--red)}
+.boost{background:var(--card2);border-radius:16px;padding:14px 16px;margin:6px 0 16px}
+.boost .row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.boost .t{font-weight:600;font-size:16px;color:var(--muted)}
+.boost.ok .t{color:var(--green)} .boost.lock .t{color:var(--orange)}
+.boost .tag{font-size:12px;color:var(--faint)}
+.boost p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.chart-head{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px}
+.legend{display:flex;gap:10px}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.chart{position:relative;height:150px}
+.chart svg{display:block;width:100%;height:100%;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--card);font-size:12px;padding:6px 8px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s}
+.asof{font-size:12px;color:var(--faint);margin-top:10px;display:flex;justify-content:space-between;gap:8px}
+.demo-flag{color:var(--orange);font-weight:600}
+
+/* side */
+.side{display:grid;gap:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.panel h2{font-size:16px;margin:0 0 4px;font-weight:700}
+.panel .lead{margin:0 0 14px;color:var(--muted);font-size:13.5px}
+.drop{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.drop{grid-template-columns:1fr}}
+.file{border:1.5px dashed var(--line);border-radius:12px;padding:12px;cursor:pointer;display:block}
+.file:hover{border-color:var(--blue)}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+.file .fn{font-weight:600}
+.file .fs{font-size:12.5px;color:var(--muted)}
+.file.loaded{border-style:solid;border-color:var(--green)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.msg{font-size:13px;margin-top:10px;color:var(--muted)}
+.msg.err{color:var(--red)}
+details summary{cursor:pointer;font-size:13.5px;color:var(--muted);margin-top:12px}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:8px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.paste{display:grid;gap:8px;margin-top:8px}
+.tbl-wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;position:sticky;top:0;background:var(--card)}
+td.r,th.r{text-align:right}
+td.num:first-child{white-space:nowrap}
+.ev-sell{color:var(--red)} .ev-buy{color:var(--green)} .ev-cut{color:var(--orange)} .ev-info{color:var(--muted)}
+.settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+@media (max-width:480px){.settings{grid-template-columns:1fr}}
+.settings label{display:grid;gap:3px;font-size:12.5px;color:var(--muted)}
+.settings input{border:1px solid var(--line);border-radius:8px;background:var(--card2);padding:6px 8px;font-size:14px;width:100%}
+.rules{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px}
+.rules li{margin:3px 0}
+.empty{color:var(--muted);font-size:14px;padding:30px 0 10px;text-align:center}
+@media (prefers-reduced-motion:reduce){.bar .knob{transition:none}}
+
+.c-purple{color:var(--purple)}
+.headline.turbo{color:var(--purple)} .headline.good{color:var(--green)}
+.act-row{margin-top:14px;min-height:22px}
+.chip{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--card2);color:var(--green)}
+.chip.bad{color:var(--red)} .chip.warn{color:var(--orange)} .chip.turbo{color:var(--purple)} .chip.cash{color:var(--blue)} .chip.idle{color:var(--muted)}
+.headline{margin-top:6px}
+.sub2{white-space:pre-line;font-size:13px;color:var(--orange);margin:-10px 0 14px}
+.confirm-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-4px 0 16px}
+.confirm-row:has(> :not([hidden])){}
+.confirm{border:0;border-radius:14px;padding:12px 16px;background:var(--green);color:#06210F;font-weight:700;font-size:15px;cursor:pointer;width:100%;text-align:left}
+.confirm.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+.confirm:active{transform:scale(.99)}
+.undo{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:2px 0}
+[hidden]{display:none !important}
+.prog{height:5px;border-radius:3px;background:var(--grey);margin:8px 0 2px;overflow:hidden}
+.prog span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+.boost.turbo .t{color:var(--purple)} .boost.turbo .prog span{background:var(--purple)}
+select{border:1px solid var(--line);border-radius:8px;background:var(--card2);padding:6px 8px;font-size:14px;width:100%}
+.ev-sellall{color:var(--red)} .ev-reentry,.ev-boost,.ev-weekly{color:var(--green)} .ev-cut,.ev-turbooff,.ev-lock,.ev-stop{color:var(--orange)} .ev-turboon{color:var(--purple)} .ev-weeklysig{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="widget" id="widget" aria-live="polite">
+    <div class="w-top">
+      <div class="w-title">QLD 매매전략</div>
+      <div class="w-live"><span class="dot" id="liveDot"></span><b id="liveTxt">불러오는 중</b></div>
+    </div>
+    <div class="act-row"><span class="chip" id="chip" hidden></span></div>
+    <div class="headline idle" id="headline">불러오는 중</div>
+    <p class="sub" id="sub">최신 종가로 전략을 계산하고 있습니다.</p>
+    <p class="sub2" id="sub2" hidden></p>
+    <div class="confirm-row">
+      <button class="confirm" id="confirmBtn" hidden></button>
+      <button class="undo" id="undoBtn" hidden>매수 완료 취소</button>
+      <button class="confirm ghost" id="setupBtn" hidden>처음 설정하기</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">현재 QLD</div><div class="v num" id="sW">—</div></div>
+      <div class="stat"><div class="k">현금 / SGOV</div><div class="v num c-blue" id="sC">—</div></div>
+      <div class="stat"><div class="k">주간매수</div><div class="v" id="sWeek">—</div></div>
+      <div class="stat"><div class="k">매매상태</div><div class="v" id="sState">—</div></div>
+    </div>
+
+    <div class="gauge">
+      <div class="g-head"><span class="lab" id="trendLab">추세</span><span class="val num" id="trendVal">200MA —</span></div>
+      <div class="bar" id="trendBar"></div>
+      <div class="g-foot"><span>이탈</span><span>200MA / +2% 버퍼</span><span>정상</span></div>
+    </div>
+
+    <div class="gauge">
+      <div class="g-head"><span class="lab" id="momLab">모멘텀</span><span class="val num" id="momVal">QQQ RSI —</span></div>
+      <div class="bar" id="rsiBar"></div>
+      <div class="g-foot"><span>눌림 46</span><span class="pips" id="pips"></span><span>75 과열</span></div>
+    </div>
+
+    <div class="boost" id="boost">
+      <div class="row"><span class="t" id="boostT">BOOST</span><span class="tag num" id="boostTag"></span></div>
+      <div class="prog" id="boostProg" hidden><span id="boostFill"></span></div>
+      <p id="boostP"></p>
+    </div>
+
+    <div class="chart-head"><span>60일 추세</span><span class="legend"><span><i style="background:var(--blue)"></i>QLD</span><span><i style="background:var(--faint)"></i>200MA</span></span></div>
+    <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+    <div class="asof"><span id="asof">—</span><span id="srcFlag"></span></div>
+  </section>
+
+  <div class="side">
+    <section class="panel" id="setupPanel">
+      <h2>기본 설정</h2>
+      <p class="lead">처음 한 번만 입력하면 됩니다. 시작일을 비워 두면 가장 최근 종가일부터 추적합니다.</p>
+      <div class="settings">
+        <label>시작일 QLD 비중 (%)<input type="number" step="any" id="iW"></label>
+        <label>총 운용금액 ($)<input type="number" step="any" id="iCap"></label>
+        <label>전략 시작일<input type="date" id="iStart"></label>
+        <label>TURBO 가용한도 (운용금액 대비)
+          <select id="iTurbo"><option value="0">0% · 사용 안 함</option><option value="10">10%</option><option value="20">20%</option><option value="30">30% (최대)</option></select>
+        </label>
+      </div>
+      <div class="actions"><button class="btn primary" id="saveSetup">저장</button></div>
+      <div class="msg" id="setupMsg"></div>
+    </section>
+
+    <section class="panel">
+      <h2>매매 기록</h2>
+      <p class="lead">신호는 미국장 확정 종가 기준입니다. 주간 매수는 완료를 누른 주만 비중에 반영됩니다.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>종가일</th><th>할 일</th><th class="r">금액</th><th class="r">QLD</th></tr></thead><tbody id="evBody"><tr><td colspan="4" class="c-muted">데이터를 불러오면 표시됩니다.</td></tr></tbody></table></div>
+      <div class="actions"><button class="btn" id="clearConfirm">주간 매수 기록 전부 지우기</button></div>
+    </section>
+
+    <section class="panel">
+      <h2>시세 데이터</h2>
+      <p class="lead" id="autoInfo">자동 데이터 불러오는 중…</p>
+      <div class="actions" style="margin-top:0"><button class="btn primary" id="reloadBtn">새로고침</button><button class="btn" id="autoBtn" hidden>자동 데이터로 돌아가기</button></div>
+      <details>
+        <summary>CSV로 직접 넣기 (자동 데이터 대신 사용)</summary>
+        <p class="lead" style="margin-top:8px">Date와 Close 열이 있는 일봉 CSV(Yahoo, Nasdaq, Stooq 형식). 2년치 권장.</p>
+        <div class="drop">
+          <label class="file" id="fQLD"><input type="file" accept=".csv,.txt,text/csv" data-k="qld"><div class="fn">QLD CSV</div><div class="fs" id="fsQLD">파일 선택</div></label>
+          <label class="file" id="fQQQ"><input type="file" accept=".csv,.txt,text/csv" data-k="qqq"><div class="fn">QQQ CSV</div><div class="fs" id="fsQQQ">파일 선택 (RSI용)</div></label>
+        </div>
+      </details>
+      <div class="msg" id="msg"></div>
+    </section>
+
+    <section class="panel">
+      <h2>세부 규칙값</h2>
+      <p class="lead">원칙에 숫자가 정해지지 않은 부분은 아래 값으로 계산합니다. 바꾸면 즉시 다시 계산됩니다.</p>
+      <details><summary>규칙값 열기</summary><div class="settings" id="settings" style="margin-top:10px"></div>
+      <div class="actions"><button class="btn" id="resetSet">기본값으로</button></div></details>
+      <ul class="rules" id="rules" style="margin-top:12px"></ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var KEY='qldStrat.v2';
+var DEF={configured:false,startDate:'',startW:70,capital:10000,turboPct:0,
+ reW:50,reentryPct:0.5,reentryDays:2,buffer:2,rsiLow:46,rsiHigh:75,boost:10,weekly:2.5,cut:10,cut3:20,
+ lockWindow:20,lockDrop:15,lockDays:10,maxW:100,boostDev:10,boostRsiLo:55,boostRsiHi:75,boostDays:14,turboDays:15};
+var FIELDS=[
+ ['reW','재진입 시 QLD 비중 %'],['reentryPct','재진입 기준: 200MA 위 %'],['reentryDays','재진입 연속 거래일'],
+ ['buffer','추가매수 금지 버퍼: 200MA 위 %'],['rsiLow','RSI 눌림 기준'],['rsiHigh','RSI 과열 기준'],
+ ['boost','눌림 시 추가매수 %p'],['cut','과열 시 매도 %p'],['cut3','3번째 과열 매도 %p'],['weekly','주간 복구 %p'],
+ ['lockWindow','Lock 감시: 과열 후 거래일'],['lockDrop','Lock 발동: RSI 하락폭'],['lockDays','Lock 유지 거래일'],['maxW','Core 최대 비중 %'],
+ ['boostDev','BOOST: 200MA 위 최소 %'],['boostRsiLo','BOOST: RSI 하한'],['boostRsiHi','BOOST: RSI 상한'],
+ ['boostDays','TURBO 전 관찰 거래일'],['turboDays','TURBO 최대 보유 거래일']
+];
+var S={set:Object.assign({},DEF),qld:'',qqq:'',manual:false,confirmed:{}};var AUTO=null;
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||'null');if(j){S.set=Object.assign({},DEF,j.set||{});S.qld=j.qld||'';S.qqq=j.qqq||'';S.manual=!!j.manual&&!!j.qld&&!!j.qqq;S.confirmed=j.confirmed||{};}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+var $=function(id){return document.getElementById(id)};
+function pad(n){return(n<10?'0':'')+n}
+function usd(x){return'$'+Math.round(x).toLocaleString('en-US')}
+function pct(x){return(Math.round(x*10)/10).toFixed(1)+'%'}
+function pp(x){return(Math.round(x*10)/10)+'%p'}
+function md(d){var p=d.split('-');return(+p[1])+'/'+(+p[2])}
+
+/* ---------- CSV ---------- */
+function splitLine(l){var out=[],cur='',q=false;for(var i=0;i<l.length;i++){var ch=l[i];if(ch==='"'){q=!q;continue;}if(ch===','&&!q){out.push(cur);cur='';}else cur+=ch;}out.push(cur);return out.map(function(s){return s.trim()});}
+function normDate(s){s=s.replace(/"/g,'').trim();var m;
+ if((m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/)))return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+ if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)))return m[3]+'-'+pad(+m[1])+'-'+pad(+m[2]);return null;}
+function num(s){return parseFloat(String(s==null?'':s).replace(/[$,"\s]/g,''));}
+function parseCSV(text){
+ var lines=text.split(/\r?\n/).filter(function(l){return l.trim()});if(lines.length<3)throw new Error('CSV 행이 너무 적습니다');
+ var h=splitLine(lines[0]).map(function(x){return x.toLowerCase()});
+ var di=h.findIndex(function(x){return /date|날짜|일자/.test(x)});
+ var ci=h.findIndex(function(x){return /close|종가/.test(x)&&!/adj/.test(x)});if(ci<0)ci=h.findIndex(function(x){return /close/.test(x)});
+ if(di<0||ci<0)throw new Error('CSV에서 Date / Close 열을 찾지 못했습니다');
+ var map={};for(var i=1;i<lines.length;i++){var c=splitLine(lines[i]);var d=normDate(c[di]||'');var v=num(c[ci]);if(d&&isFinite(v)&&v>0)map[d]=v;}
+ return Object.keys(map).sort().map(function(d){return{d:d,c:map[d]}});}
+
+/* ---------- dates / indicators ---------- */
+function weekKey(ds){var p=ds.split('-');var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return d.toISOString().slice(0,10);}
+function nyToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+/* 지금 미국 기준 '이번 주' (토·일은 다음 주로 간주) */
+function currentWeek(){var p=nyToday().split('-');var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));var wd=d.getUTCDay();if(wd===6)d.setUTCDate(d.getUTCDate()+2);if(wd===0)d.setUTCDate(d.getUTCDate()+1);return weekKey(d.toISOString().slice(0,10));}
+function sma(a,n){var o=new Array(a.length).fill(null),s=0;for(var i=0;i<a.length;i++){s+=a[i];if(i>=n)s-=a[i-n];if(i>=n-1)o[i]=s/n;}return o;}
+function rsi(a,n){var o=new Array(a.length).fill(null);if(a.length<=n)return o;var g=0,l=0,d,i;
+ for(i=1;i<=n;i++){d=a[i]-a[i-1];if(d>0)g+=d;else l-=d;}g/=n;l/=n;o[n]=l===0?100:100-100/(1+g/l);
+ for(i=n+1;i<a.length;i++){d=a[i]-a[i-1];g=(g*(n-1)+Math.max(d,0))/n;l=(l*(n-1)+Math.max(-d,0))/n;o[i]=l===0?100:100-100/(1+g/l);}return o;}
+
+/* ---------- 전략 엔진 ---------- */
+function simulate(qld,qqq,P,confirmed){
+ var qm={};qqq.forEach(function(r){qm[r.d]=r.c});
+ var rows=qld.filter(function(r){return qm[r.d]!=null}).map(function(r){return{d:r.d,c:r.c,q:qm[r.d]}});
+ if(rows.length<215)throw new Error('QLD·QQQ 겹치는 거래일이 '+rows.length+'일입니다. 200일선 계산에 215일 이상 필요합니다.');
+ var C=rows.map(function(r){return r.c}),MA=sma(C,200),R=rsi(rows.map(function(r){return r.q}),14),n=rows.length,first=199;
+ var s=rows.findIndex(function(r){return r.d>=P.startDate});if(!P.startDate||s<0)s=n-1;s=Math.max(s,first);
+ var cap=+P.capital||0,cl=function(x){return Math.max(0,Math.min(P.maxW,Math.round(x*100)/100))};
+ var st={w:0,inMkt:false,re:0,heat:0,inHeat:false,inLow:false,heatIdx:-999,peak:0,lockUntil:-1,lockUsed:false,
+  wk:'',wkDay:0,bought:false,sig:null,blockLogged:false,boostCnt:0,turboOn:false,turboDay:0,turboAmt:0};
+ var ev=[],days=[];
+ for(var i=first;i<n;i++){
+  var d=rows[i].d,c=C[i],ma=MA[i],r=R[i],dev=(c/ma-1)*100,trade=i>=s,E=[];
+  function add(k,text,amt){E.push({k:k,text:text,amt:amt});}
+  var wk=weekKey(d);if(wk!==st.wk){st.wk=wk;st.wkDay=0;st.bought=false;st.sig=null;st.blockLogged=false;}st.wkDay++;
+  /* RSI 과열/눌림 사이클 — 시작일 이전부터 추적 */
+  var heatEv=false,lowEv=false,lockEv=false;
+  if(r>P.rsiHigh){if(!st.inHeat){st.inHeat=true;st.heat=Math.min(3,st.heat+1);heatEv=true;st.heatIdx=i;st.peak=r;st.lockUsed=false;}else st.peak=Math.max(st.peak,r);}
+  else if(r<P.rsiHigh-5)st.inHeat=false;
+  var resetEv=false;
+  if(r<P.rsiLow){if(!st.inLow){st.inLow=true;lowEv=true;if(st.heat>0)resetEv=true;st.heat=0;}}else if(r>P.rsiLow+4)st.inLow=false;
+  if(!st.lockUsed&&i>st.heatIdx&&i-st.heatIdx<=P.lockWindow&&st.peak-r>=P.lockDrop){st.lockUntil=i+P.lockDays;st.lockUsed=true;lockEv=true;}
+  if(!trade)continue;
+  if(i===s){st.w=cl(P.startW);st.inMkt=st.w>0||c>=ma;add('info','추적 시작 · QLD '+pct(st.w));}
+  if(resetEv)add('info','RSI '+P.rsiLow+' 하회 → 과열 카운트 초기화, 새 사이클');
+  var locked=i<=st.lockUntil,buf=c>=ma&&c<ma*(1+P.buffer/100);
+  if(lockEv)add('lock','과열 후 RSI 급락('+st.peak.toFixed(1)+'→'+r.toFixed(1)+') → Momentum Lock '+P.lockDays+'거래일, 추가매수 중지');
+  if(st.inMkt&&c<ma){
+   var pw=st.w;st.w=0;st.inMkt=false;st.re=0;st.sig=null;
+   add('sellall','전량매도 → SGOV (종가가 200일선 아래)',cap*pw/100);
+  } else if(!st.inMkt){
+   st.re=c>=ma*(1+P.reentryPct/100)?st.re+1:0;
+   if(st.re>=P.reentryDays){st.inMkt=true;st.w=cl(P.reW);st.bought=true;add('reentry','QLD 재진입 → '+pct(st.w)+' (200일선 +'+P.reentryPct+'% 위 '+P.reentryDays+'일 연속)',cap*st.w/100);}
+  } else {
+   if((heatEv||lockEv)&&st.sig&&!st.bought)st.sig=null;
+   if(heatEv){var cut=Math.min(st.w,st.heat>=3?P.cut3:P.cut);st.w=cl(st.w-cut);add('cut',pp(cut)+' 매도 · QQQ RSI '+r.toFixed(1)+' 과열 '+st.heat+'/3'+(st.heat>=3?' (방어 강화)':''),cap*cut/100);}
+   if(lowEv){
+    if(buf)add('info','RSI 눌림이지만 200일선 +'+P.buffer+'% 버퍼 구간 → 추가매수 보류');
+    else if(locked)add('info','RSI 눌림이지만 Momentum Lock 중 → 추가매수 보류');
+    else if(st.w<P.maxW){var a=Math.min(P.boost,P.maxW-st.w);st.w=cl(st.w+a);add('boost',pp(a)+' 추가매수 · QQQ RSI '+r.toFixed(1)+' 눌림',cap*a/100);}
+   }
+   /* 주간 매수: 첫 하락일 우선, 없으면 3번째 거래일 (신호는 확정 종가 기준) */
+   if(!st.bought&&!st.sig&&st.w<P.maxW){
+    var down=c<C[i-1],trig=down||st.wkDay>=2;
+    if(trig){
+     var why=buf?'200일선 +'+P.buffer+'% 버퍼 구간':locked?'Momentum Lock':r>P.rsiHigh?'RSI 과열':heatEv?'과열 매도일':null;
+     if(why){if(!st.blockLogged){st.blockLogged=true;add('stop','주간 매수 중지 · '+why);}}
+     else{
+      var amt=Math.min(P.weekly,P.maxW-st.w);st.sig={d:d,amt:amt,reason:down?'이번 주 첫 하락일':'하락일 없음 → '+(st.wkDay+1)+'번째 거래일'};
+      if(confirmed[wk]){st.w=cl(st.w+amt);st.bought=true;add('weekly','✓ 주간 '+pp(amt)+' 매수 완료 ('+st.sig.reason+')',cap*amt/100);}
+      else add('weeklysig','주간 '+pp(amt)+' 매수 신호 ('+st.sig.reason+')',cap*amt/100);
+     }
+    }
+   }
+  }
+  /* BOOST → TURBO */
+  var cond=st.inMkt&&st.w>=P.maxW&&dev>=P.boostDev&&r>=P.boostRsiLo&&r<P.boostRsiHi;
+  if(st.turboOn){st.turboDay++;
+   if(!cond||st.turboDay>=P.turboDays){st.turboOn=false;st.boostCnt=0;add('turbooff','TURBO 종료 → TQQQ 전량매도 ('+(st.turboDay>=P.turboDays?P.turboDays+'거래일 만기':'추세 조건 이탈')+')',st.turboAmt);}
+  } else {
+   st.boostCnt=cond?Math.min(P.boostDays,st.boostCnt+1):0;
+   if(st.boostCnt>=P.boostDays&&P.turboPct>0&&cap>0){st.turboOn=true;st.turboDay=0;st.turboAmt=cap*P.turboPct/100;add('turboon','TURBO 조건 충족 → TQQQ 투입 (최대 '+P.turboDays+'거래일)',st.turboAmt);}
+  }
+  E.forEach(function(e){e.d=d;e.w=st.w;ev.push(e);});
+  days.push({d:d,c:c,ma:ma,r:r,dev:dev,w:st.w,E:E,buf:buf,locked:locked,lockLeft:Math.max(0,st.lockUntil-i),cond:cond});
+ }
+ return{days:days,ev:ev,st:st,P:P,cap:cap};
+}
+
+/* ---------- 화면 ---------- */
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function setBar(el,segs,lo,hi,val){el.textContent='';segs.forEach(function(s){var e=document.createElement('span');e.style.flex=String((s[1]-s[0])/(hi-lo));e.style.background=s[2];el.appendChild(e);});
+ var k=document.createElement('div');k.className='knob';k.style.left=((Math.max(lo,Math.min(hi,val))-lo)/(hi-lo)*100)+'%';el.appendChild(k);}
+function cls(el,c){el.className=c}
+var lastRes=null;
+var ACT={sellall:['전량매도','bad','전량 나가라'],reentry:['재진입','good','다시 들어가라'],cut:['매도','warn','줄여라'],boost:['매수','good','사라'],
+ turboon:['TURBO','turbo','지금만 Turbo를 써라'],turbooff:['매도','warn','TQQQ 정리'],weeklysig:['매수','good','사라'],stop:['매수중지','warn','사지 마라'],
+ wait:['대기','idle','기다려라'],cash:['대기','cash','기다려라'],done:['대기','good','기다려라'],hold:['유지','good','유지']};
+
+function render(res){
+ lastRes=res;var P=res.P,st=res.st,D=res.days,t=D[D.length-1],cap=res.cap;
+ var curWk=currentWeek(),newWeek=curWk!==st.wk;
+ var big=t.E.filter(function(e){return['sellall','reentry','cut','boost','turboon','turbooff'].indexOf(e.k)>=0});
+ var order=['sellall','reentry','cut','boost','turboon','turbooff'];big.sort(function(a,b){return order.indexOf(a.k)-order.indexOf(b.k)});
+ var weeklyAmt=cap*P.weekly/100,head,sub,key,extra=[];
+ var pending=!newWeek&&st.sig&&!st.bought,boughtNow=!newWeek&&st.bought;
+ var blockedNow=st.inMkt&&st.w<P.maxW&&(t.buf?'200일선 +'+P.buffer+'% 버퍼 구간':t.locked?'Momentum Lock '+t.lockLeft+'거래일 남음':t.r>P.rsiHigh?'RSI 과열':null);
+ if(big.length){var e=big[0];key=e.k;
+  if(key==='sellall'){head='전량매도 → SGOV';sub='QLD '+usd(e.amt)+' 전부 매도 · '+md(t.d)+' 종가가 200일선 아래';}
+  else if(key==='reentry'){head='QLD 재진입';sub='QLD '+pct(t.w)+'까지 '+usd(e.amt)+' 매수 · 200일선 회복 확인';}
+  else if(key==='cut'){head=e.text.split(' ·')[0];sub='QLD '+usd(e.amt)+' 매도 · '+e.text.split('· ')[1];}
+  else if(key==='boost'){head=e.text.split(' ·')[0];sub='QLD '+usd(e.amt)+' 매수 · '+e.text.split('· ')[1];}
+  else if(key==='turboon'){head='TURBO → TQQQ 투입';sub='TQQQ '+usd(e.amt)+' 매수 · 최대 '+P.turboDays+'거래일만 보유';}
+  else {head='TURBO 종료';sub='TQQQ '+usd(e.amt)+' 전량매도 · '+(e.text.match(/\((.*)\)/)||['',''])[1];}
+  big.slice(1).forEach(function(x){extra.push('함께: '+x.text+(x.amt?' · '+usd(x.amt):''));});
+ } else if(!st.inMkt){key='cash';
+  if(st.re>0){head='재진입 확인 '+st.re+'/'+P.reentryDays;sub='200일선 +'+P.reentryPct+'% 위 종가가 '+P.reentryDays+'일 연속이면 재진입';}
+  else{head='SGOV 대기';sub='QLD가 200일선 아래 · 200일선까지 '+(t.dev>=0?'+':'')+t.dev.toFixed(1)+'%';}
+ } else if(st.w>=P.maxW&&!pending){key='hold';
+  head=st.turboOn?'TURBO 보유 중':'Core 100% 유지';
+  sub=st.turboOn?'TQQQ '+usd(st.turboAmt)+' · '+st.turboDay+'/'+P.turboDays+'거래일 · 조건 깨지면 즉시 정리':'주간 매수 없음 · 아래 BOOST 상태만 확인';
+ } else if(boughtNow){key='done';head='이번 주 매수 완료';sub='이번 주 할당량 '+pp(st.sig?st.sig.amt:P.weekly)+' 반영 · 다음 주까지 대기';}
+ else if(pending){key='weeklysig';head=pp(st.sig.amt)+' 매수';sub='이번 주 매수금액 '+usd(cap*st.sig.amt/100)+' · '+st.sig.reason+' ('+md(st.sig.d)+' 종가)';}
+ else if(blockedNow){key='stop';head='매수중지';sub='이번 주 매수금액 '+usd(weeklyAmt)+' 보류 · '+blockedNow;}
+ else {key='wait';head='이번 주 매수 대기';
+  sub='이번 주 매수금액 '+usd(weeklyAmt)+' · 하락일 우선 · '+(newWeek?'이번 주 거래 시작 전':'대기 '+st.wkDay+'거래일째');}
+ if(big.length&&pending)extra.push('주간 매수 신호도 있음: '+pp(st.sig.amt)+' · '+usd(cap*st.sig.amt/100));
+ var a=ACT[key];if(key==='hold'&&st.turboOn)a=['TURBO','turbo','Turbo 유지'];
+ $('headline').textContent=head;cls($('headline'),'headline '+a[1]);$('sub').textContent=sub;
+ $('chip').textContent=a[2];$('chip').hidden=false;cls($('chip'),'chip '+a[1]);
+ $('sub2').hidden=!extra.length;$('sub2').textContent=extra.join('\n');
+ /* 확인 버튼 */
+ var cb=$('confirmBtn');cb.hidden=!pending||!P.configured;
+ if(pending)cb.textContent='✓ 이번 주 '+pp(st.sig.amt)+' 매수 완료 · '+usd(cap*st.sig.amt/100);
+ $('undoBtn').hidden=!(boughtNow&&S.confirmed[st.wk]);
+ $('setupBtn').hidden=!!P.configured;
+ if(!P.configured){$('sub').textContent='현재 QLD 비중, 총 운용금액, 시작일, TURBO 한도를 먼저 입력하세요. 지금은 기본값으로 보여줍니다.';}
+ /* 상단 상태 */
+ var live=!st.inMkt?'이탈':st.turboOn?'TURBO':t.locked?'Lock':t.buf?'버퍼':'정상';
+ var lc=!st.inMkt?'var(--red)':st.turboOn?'var(--purple)':t.locked||t.buf?'var(--orange)':'var(--green)';
+ $('liveTxt').textContent=live+' · 추적중';$('liveTxt').style.color=lc;$('liveDot').style.background=lc;
+ $('sW').textContent=pct(st.w);$('sC').textContent=pct(100-st.w);
+ var wkT,wkC;if(!st.inMkt){wkT='중지';wkC='c-red';}else if(boughtNow){wkT='완료';wkC='c-green';}else if(st.w>=P.maxW){wkT='없음';wkC='c-muted';}else if(pending){wkT='매수';wkC='c-green';}else if(blockedNow){wkT='중지';wkC='c-orange';}else{wkT='대기';wkC='c-muted';}
+ $('sWeek').textContent=wkT;cls($('sWeek'),'v '+wkC);
+ $('sState').textContent=a[0];cls($('sState'),'v '+({bad:'c-red',warn:'c-orange',good:'c-green',turbo:'c-purple',cash:'c-blue',idle:'c-muted'})[a[1]]);
+ /* 게이지 */
+ var dev=t.dev,r=t.r;
+ $('trendLab').textContent=dev<0?'추세 이탈':dev<P.buffer?'버퍼 구간 · 추가매수 금지':dev<P.boostDev?'추세 정상':'추세 강함';
+ cls($('trendLab'),'lab '+(dev<0?'c-red':dev<P.buffer?'c-orange':'c-green'));
+ $('trendVal').textContent='200MA '+(dev>=0?'+':'')+dev.toFixed(1)+'%';
+ setBar($('trendBar'),[[-10,0,cssv('--red')],[0,P.buffer,cssv('--yellow')],[P.buffer,P.boostDev,cssv('--green')],[P.boostDev,25,cssv('--green2')]],-10,25,dev);
+ $('momLab').textContent=t.locked?'Momentum Lock · '+t.lockLeft+'일 남음':r<P.rsiLow?'모멘텀 눌림':r>P.rsiHigh?'모멘텀 과열':r>=P.rsiHigh-5?'과열 근접':'모멘텀 중립';
+ cls($('momLab'),'lab '+(t.locked?'c-orange':r<P.rsiLow?'c-blue':r>P.rsiHigh?'c-red':r>=P.rsiHigh-5?'c-orange':''));
+ $('momVal').textContent='QQQ RSI '+r.toFixed(1);
+ setBar($('rsiBar'),[[20,P.rsiLow-8,cssv('--blue')],[P.rsiLow-8,P.rsiLow,cssv('--lb')],[P.rsiLow,P.rsiHigh-5,cssv('--grey')],[P.rsiHigh-5,P.rsiHigh,cssv('--yellow')],[P.rsiHigh,90,cssv('--red')]],20,90,r);
+ var pe=$('pips');pe.textContent='';for(var k=1;k<=3;k++){var x=document.createElement('span');x.className='pip'+(k<=st.heat?' on':'');pe.appendChild(x);}
+ var lb=document.createElement('span');lb.textContent='과열 '+st.heat+'/3';lb.style.marginLeft='4px';pe.appendChild(lb);
+ /* BOOST / TURBO */
+ var bt,btag='',bp,bc='',prog=null;
+ if(!st.inMkt){bt='BOOST 비활성';bp='200일선 회복 후 다시 추적';}
+ else if(st.turboOn){bt='TURBO 보유 중';bc='turbo';btag=st.turboDay+'/'+P.turboDays+'일';prog=st.turboDay/P.turboDays;bp='TQQQ '+usd(st.turboAmt)+' · 만기나 추세 이탈 시 전량매도';}
+ else if(st.w<P.maxW){bt='BOOST 조건 미충족';btag='관찰';bp='Core '+P.maxW+'% 도달 후 추적 · 현재 '+pct(st.w);}
+ else if(st.boostCnt>=P.boostDays){bt='TURBO 조건 충족';bc='ok';btag=P.boostDays+'/'+P.boostDays;prog=1;bp=P.turboPct>0?'다음 신호에서 TQQQ 투입':'TURBO 한도가 0%라 투입하지 않습니다 · 기본 설정에서 변경';}
+ else if(t.cond){bt='BOOST 추적 중';bc='ok';btag=st.boostCnt+'/'+P.boostDays+'일';prog=st.boostCnt/P.boostDays;bp=P.boostDays+'거래일 강세 유지 시 TURBO 가능 · 200MA +'+dev.toFixed(1)+'%, RSI '+r.toFixed(1);}
+ else{bt='BOOST 조건 미충족';btag='관찰';bp='200MA +'+P.boostDev+'% 이상, RSI '+P.boostRsiLo+'~'+P.boostRsiHi+' 필요 · 지금 '+(dev>=0?'+':'')+dev.toFixed(1)+'%, RSI '+r.toFixed(1);}
+ cls($('boost'),'boost '+bc);$('boostT').textContent=bt;$('boostTag').textContent=btag;$('boostP').textContent=bp;
+ $('boostProg').hidden=prog==null;if(prog!=null)$('boostFill').style.width=(prog*100)+'%';
+ var p=t.d.split('-');var age=(Date.now()-new Date(+p[0],+p[1]-1,+p[2]).getTime())/864e5;
+ $('asof').textContent=t.d+' 확정 종가 기준'+(age>5?' · 데이터가 오래됨':'');
+ $('srcFlag').textContent=S.manual?'직접 넣은 CSV':'';cls($('srcFlag'),S.manual?'demo-flag':'');
+ drawChart();
+ var tb=$('evBody');tb.textContent='';
+ res.ev.slice(-60).reverse().forEach(function(e){var tr=document.createElement('tr');
+  [[e.d,'num'],[e.k==='weeklysig'&&!(pending&&e.d===st.sig.d)?e.text+' · 완료 미체크':e.text,'ev-'+e.k],[e.amt?usd(e.amt):'','r num'],[pct(e.w),'r num']].forEach(function(c){var td=document.createElement('td');td.textContent=c[0];td.className=c[1];tr.appendChild(td);});tb.appendChild(tr);});
+}
+
+function drawChart(){
+ var box=$('chart'),tip=$('tip');Array.prototype.slice.call(box.querySelectorAll('svg')).forEach(function(s){s.remove()});
+ if(!lastRes)return;var D=lastRes.days.slice(-60);if(D.length<2)return;
+ var W=box.clientWidth,H=box.clientHeight,pt=8,pb=8,vals=[];D.forEach(function(x){vals.push(x.c,x.ma)});
+ var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),pd=(mx-mn)*.08||1;mn-=pd;mx+=pd;
+ var X=function(i){return i/(D.length-1)*W},Y=function(v){return pt+(1-(v-mn)/(mx-mn))*(H-pt-pb)};
+ var NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');svg.setAttribute('aria-label','최근 60거래일 QLD 종가와 200일선');
+ function path(k,col,w){var p=document.createElementNS(NS,'path');p.setAttribute('d',D.map(function(x,i){return(i?'L':'M')+X(i).toFixed(1)+' '+Y(x[k]).toFixed(1)}).join(''));p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width',w);p.setAttribute('stroke-linejoin','round');svg.appendChild(p);}
+ path('ma',cssv('--faint'),1.6);path('c',cssv('--blue'),2.4);
+ var COL={sellall:'--red',cut:'--orange',turbooff:'--orange',reentry:'--green',boost:'--green',weekly:'--green',turboon:'--purple'};
+ D.forEach(function(x,i){var e=x.E.filter(function(e){return COL[e.k]})[0];if(!e)return;var c=document.createElementNS(NS,'circle');c.setAttribute('cx',X(i));c.setAttribute('cy',Y(x.c));c.setAttribute('r',3.5);c.setAttribute('fill',cssv(COL[e.k]));c.setAttribute('stroke',cssv('--card'));c.setAttribute('stroke-width',1.5);svg.appendChild(c);});
+ var vl=document.createElementNS(NS,'line');vl.setAttribute('y1',0);vl.setAttribute('y2',H);vl.setAttribute('stroke',cssv('--line'));vl.style.display='none';svg.appendChild(vl);
+ function move(ev){var rc=box.getBoundingClientRect();var i=Math.max(0,Math.min(D.length-1,Math.round((ev.clientX-rc.left)/W*(D.length-1))));var x=D[i];
+  vl.setAttribute('x1',X(i));vl.setAttribute('x2',X(i));vl.style.display='';
+  tip.textContent=x.d+' · QLD '+x.c.toFixed(2)+' · 200MA '+x.ma.toFixed(2)+' · RSI '+x.r.toFixed(1)+' · 비중 '+pct(x.w);
+  tip.style.opacity=1;var tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(W-tw,X(i)-tw/2))+'px';tip.style.top=(Y(x.c)<H/2?H-28:0)+'px';}
+ svg.addEventListener('pointermove',move);svg.addEventListener('pointerdown',move);svg.addEventListener('pointerleave',function(){tip.style.opacity=0;vl.style.display='none';});
+ box.insertBefore(svg,tip);
+}
+
+function rulesList(){var P=S.set,ul=$('rules');ul.textContent='';[
+ '모든 신호는 미국장 확정 종가 기준 (장중·프리마켓 무시)',
+ '종가가 QLD 200일선 아래 → QLD 전량매도, SGOV 대기',
+ '200일선 +'+P.reentryPct+'% 위 종가 '+P.reentryDays+'거래일 연속 → QLD '+P.reW+'%로 재진입',
+ '200일선 위 +'+P.buffer+'% 이내 → 추가매수 중지',
+ 'QQQ RSI(14) '+P.rsiLow+' 아래로 내려온 날 +'+P.boost+'%p, '+P.rsiHigh+' 위로 올라선 날 −'+P.cut+'%p',
+ '신호 없으면 매주 +'+P.weekly+'%p (운용금액 기준 금액 표시), 최대 '+P.maxW+'%',
+ '주간 매수: 그 주 첫 하락 종가일 우선, 2거래일 동안 하락일이 없으면 3번째 거래일에 실행',
+ '과열 후 '+P.lockWindow+'거래일 안에 RSI가 고점 대비 '+P.lockDrop+' 이상 급락 → '+P.lockDays+'거래일 Momentum Lock',
+ '과열 카운트 1/3 → 2/3 → 3/3, 3번째 과열은 −'+P.cut3+'%p로 방어 강화 · RSI '+P.rsiLow+' 하회 시 초기화',
+ 'BOOST: QLD '+P.maxW+'% + 200일선 +'+P.boostDev+'% 이상 + QQQ RSI '+P.boostRsiLo+'~'+P.boostRsiHi+' 를 '+P.boostDays+'거래일 연속 유지',
+ 'TURBO: 운용금액의 '+P.turboPct+'%로 TQQQ 매수, 최대 '+P.turboDays+'거래일 보유 (BOOST 조건 깨지면 즉시 종료)'
+ ].forEach(function(t){var li=document.createElement('li');li.textContent=t;ul.appendChild(li);});}
+
+function buildSettings(){var g=$('settings');g.textContent='';FIELDS.forEach(function(f){var l=document.createElement('label');l.textContent=f[1];var i=document.createElement('input');i.type='number';i.step='any';i.value=S.set[f[0]];
+ i.addEventListener('change',function(){var v=parseFloat(i.value);if(!isFinite(v)){i.value=S.set[f[0]];return;}S.set[f[0]]=v;save();run();});l.appendChild(i);g.appendChild(l);});
+ $('iW').value=S.set.startW;$('iCap').value=S.set.capital;$('iStart').value=S.set.startDate;$('iTurbo').value=String(S.set.turboPct);}
+
+function msg(t,err){$('msg').textContent=t;cls($('msg'),'msg'+(err?' err':''));}
+function getRows(){
+ if(S.manual){var q=parseCSV(S.qld),qq=parseCSV(S.qqq);$('fsQLD').textContent=q.length+'일 · ~'+q[q.length-1].d;$('fsQQQ').textContent=qq.length+'일 · ~'+qq[qq.length-1].d;return[q,qq];}
+ return AUTO?[AUTO.qld,AUTO.qqq]:null;}
+function run(){
+ rulesList();$('autoBtn').hidden=!S.manual;
+ $('fQLD').classList.toggle('loaded',!!S.qld);$('fQQQ').classList.toggle('loaded',!!S.qqq);
+ try{var r=getRows();if(!r){lastRes=null;return;}render(simulate(r[0],r[1],S.set,S.confirmed));msg('');}
+ catch(e){msg(e.message,true);}
+}
+function lastDate(){var r=null;try{r=getRows();}catch(e){}return r&&r[0].length?r[0][r[0].length-1].d:'';}
+function loadAuto(){
+ $('autoInfo').textContent='자동 데이터 불러오는 중…';
+ fetch('data/prices.json?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){
+  var conv=function(a){return(a||[]).map(function(x){return{d:x[0],c:+x[1]}}).filter(function(x){return x.c>0})};
+  if(!j.QLD||j.QLD.length<3)throw new Error('데이터가 아직 비어 있습니다. Actions에서 워크플로를 한 번 실행하세요');
+  AUTO={qld:conv(j.QLD),qqq:conv(j.QQQ)};var u=new Date(j.updated);
+  $('autoInfo').textContent='GitHub Actions가 평일 미국 장 마감 후 Yahoo Finance 확정 종가를 받아옵니다. 마지막 갱신 '+(isNaN(u)?'—':u.toLocaleString('ko-KR'))+' · 종가 '+AUTO.qld[AUTO.qld.length-1].d;
+  run();
+ }).catch(function(e){$('autoInfo').textContent='자동 데이터를 못 불러왔습니다 ('+e.message+'). 아래에서 CSV를 직접 넣을 수 있습니다.';run();});
+}
+
+$('saveSetup').addEventListener('click',function(){
+ var w=parseFloat($('iW').value),c=parseFloat($('iCap').value);
+ if(!isFinite(w)||w<0||w>100){$('setupMsg').textContent='QLD 비중은 0~100 사이로 입력하세요.';return;}
+ if(!isFinite(c)||c<=0){$('setupMsg').textContent='총 운용금액을 달러로 입력하세요.';return;}
+ var sd=$('iStart').value||lastDate();
+ Object.assign(S.set,{startW:w,capital:c,startDate:sd,turboPct:+$('iTurbo').value,configured:true});
+ $('iStart').value=sd;save();$('setupMsg').textContent='저장했습니다 · '+(sd||'최근 종가일')+'부터 추적';run();});
+$('setupBtn').addEventListener('click',function(){$('setupPanel').scrollIntoView({behavior:'smooth'});$('iW').focus();});
+$('confirmBtn').addEventListener('click',function(){if(!lastRes)return;S.confirmed[lastRes.st.wk]=true;save();run();});
+$('undoBtn').addEventListener('click',function(){if(!lastRes)return;delete S.confirmed[lastRes.st.wk];save();run();});
+$('clearConfirm').addEventListener('click',function(){if(!confirm('주간 매수 완료 기록을 모두 지울까요?'))return;S.confirmed={};save();run();});
+$('reloadBtn').addEventListener('click',loadAuto);
+$('autoBtn').addEventListener('click',function(){S.manual=false;S.qld='';S.qqq='';save();$('fsQLD').textContent='파일 선택';$('fsQQQ').textContent='파일 선택 (RSI용)';run();});
+$('resetSet').addEventListener('click',function(){var keep={configured:S.set.configured,startDate:S.set.startDate,startW:S.set.startW,capital:S.set.capital,turboPct:S.set.turboPct};S.set=Object.assign({},DEF,keep);save();buildSettings();run();});
+document.querySelectorAll('.file input').forEach(function(inp){inp.addEventListener('change',function(){var f=inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){S[inp.dataset.k]=String(rd.result);S.manual=!!(S.qld&&S.qqq);save();if(!S.manual)msg('나머지 파일도 불러와 주세요.');run();inp.value='';};rd.readAsText(f);});});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&!S.manual)loadAuto();});
+var to;window.addEventListener('resize',function(){clearTimeout(to);to=setTimeout(drawChart,120)});
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(lastRes)render(lastRes)});
+window.__qld={simulate:simulate,S:S};
+load();buildSettings();run();loadAuto();
+})();
+</script>
+
+</body>
+</html>
